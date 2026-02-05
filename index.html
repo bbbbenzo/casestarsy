@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Рулетка Премиума 2.0</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a0f2a 100%);
+      color: #e0e0ff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 920px;
+      background: rgba(20, 20, 45, 0.92);
+      border-radius: 16px;
+      border: 1px solid #3a3a6a;
+      box-shadow: 0 0 60px rgba(120, 80, 220, 0.25);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .header {
+      background: linear-gradient(90deg, #2a1a4a, #4a2a6a);
+      padding: 18px 24px;
+      text-align: center;
+      border-bottom: 2px solid #5a3a8a;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 0 0 10px rgba(180,120,255,0.7);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    @media (min-width: 768px) {
+      .main-content {
+        flex-direction: row;
+        align-items: stretch;
+      }
+    }
+
+    .left-panel, .right-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .left-panel {
+      background: rgba(15, 15, 35, 0.6);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #3a3a5a;
+    }
+
+    .control-group {
+      margin-bottom: 22px;
+    }
+
+    .control-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: #c0c0ff;
+      font-weight: 500;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #4a2a6a 0%, #8a4aff 100%);
+      outline: none;
+      appearance: none;
+      margin-bottom: 8px;
+      transition: opacity 0.3s;
+    }
+
+    input[type="range"]:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #a070ff;
+      border: 3px solid #e0d0ff;
+      box-shadow: 0 0 12px rgba(160,112,255,0.8);
+      cursor: pointer;
+    }
+
+    input[type="range"]:disabled::-webkit-slider-thumb {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .value-display {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-top: 4px;
+      min-height: 1.8em;
+    }
+
+    .value-display.stars {
+      color: #ffcc00;
+    }
+
+    .value-display.days {
+      color: #00ccff;
+    }
+
+    .range-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .range-label {
+      font-size: 0.85rem;
+      color: #a0a0ff;
+      min-width: 40px;
+    }
+
+    .range-label.min {
+      text-align: left;
+    }
+
+    .range-label.max {
+      text-align: right;
+    }
+
+    .range-wrapper {
+      flex: 1;
+    }
+
+    /* Контейнер для рулетки */
+    .roulette-container {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 0 auto 30px;
+    }
+
+    .chance-circle {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, #2a1a4a 0%, #0f0f1a 70%);
+      border-radius: 50%;
+      border: 8px solid #3a2a5a;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.7), 0 0 40px rgba(120,80,220,0.4);
+      overflow: hidden;
+    }
+
+    .progress-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        #00ff88 0deg var(--success-deg),
+        #ff4444 var(--success-deg) 360deg
+      );
+      -webkit-mask: radial-gradient(farthest-side, transparent calc(50% - 12px), black calc(50% - 10px));
+      mask: radial-gradient(farthest-side, transparent calc(50% - 12px), black calc(50% - 10px));
+    }
+
+    /* Вращающаяся стрелка-треугольник */
+    .spin-arrow {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      width: 30px;
+      height: 60px;
+      transform: translateX(-50%) rotate(0deg);
+      transform-origin: center 132px;
+      z-index: 20;
+    }
+
+    .arrow-triangle {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 40px solid #ff3366;
+      top: 0;
+      left: 0;
+      filter: drop-shadow(0 0 12px rgba(255, 51, 102, 0.9));
+      border-radius: 4px 4px 0 0;
+    }
+
+    .arrow-glow {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle, rgba(255, 51, 102, 0.4), transparent 80%);
+      border-radius: 50%;
+      top: -5px;
+      left: -5px;
+    }
+
+    /* Текст в центре */
+    .center-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 5;
+    }
+
+    .chance-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #e0e0ff;
+      text-shadow: 0 0 20px currentColor;
+      line-height: 1;
+    }
+
+    .chance-desc {
+      font-size: 1rem;
+      color: #a0a0ff;
+      margin-top: 8px;
+    }
+
+    .spin-button {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #ff6b6b, #ff8e53);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(255,100,80,0.4);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 10px;
+    }
+
+    .spin-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(255,100,80,0.6);
+    }
+
+    .spin-button:disabled {
+      background: #444;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .topup-button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #4a9eff, #2a6eff);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(74, 158, 255, 0.3);
+      transition: all 0.2s;
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .topup-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(74, 158, 255, 0.5);
+    }
+
+    .admin-button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #ff4d94, #ff2a7a);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(255, 77, 148, 0.3);
+      transition: all 0.2s;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .admin-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 77, 148, 0.5);
+    }
+
+    .result {
+      margin-top: 24px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+      min-height: 2.2em;
+    }
+
+    .win  { color: #00ff88; text-shadow: 0 0 15px #00ff88; }
+    .lose { color: #ff5555; text-shadow: 0 0 15px #ff5555; }
+
+    .small-hint {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #8070aa;
+      margin-top: 12px;
+    }
+
+    .balance-display {
+      background: rgba(30, 30, 60, 0.7);
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border: 1px solid #3a3a8a;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.1rem;
+    }
+
+    .balance-label {
+      color: #a0a0ff;
+    }
+
+    .balance-value {
+      color: #ffcc00;
+      font-weight: 700;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Индикаторы на круге */
+    .circle-marks {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .mark {
+      position: absolute;
+      width: 2px;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.15);
+      top: 0;
+      left: 50%;
+      transform-origin: center 120px;
+    }
+
+    .mark.highlight {
+      background: rgba(255, 255, 255, 0.4);
+      height: 22px;
+      width: 3px;
+    }
+
+    .topup-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+      background: rgba(20, 20, 40, 0.6);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #3a3a5a;
+    }
+
+    .topup-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      background: rgba(40, 40, 70, 0.5);
+      border-radius: 8px;
+      border: 1px solid #4a4a8a;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .topup-option:hover {
+      background: rgba(50, 50, 90, 0.7);
+      border-color: #5a5aaa;
+      transform: translateY(-2px);
+    }
+
+    .topup-option.selected {
+      background: rgba(60, 60, 120, 0.8);
+      border-color: #6a6aff;
+      box-shadow: 0 0 15px rgba(106, 106, 255, 0.3);
+    }
+
+    .topup-amount {
+      font-weight: 600;
+      color: #ffcc00;
+      font-size: 1.1rem;
+    }
+
+    .topup-price {
+      color: #a0a0ff;
+      font-size: 0.9rem;
+    }
+
+    .topup-confirm-button {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, #00cc66, #00aa44);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(0, 204, 102, 0.3);
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+
+    .topup-confirm-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 204, 102, 0.5);
+    }
+
+    .topup-confirm-button:disabled {
+      background: #444;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .no-balance-warning {
+      text-align: center;
+      color: #ff6b6b;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      padding: 10px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .payment-info {
+      text-align: center;
+      color: #4a9eff;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      padding: 10px;
+      background: rgba(74, 158, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(74, 158, 255, 0.3);
+    }
+
+    /* Админ панель */
+    .admin-panel {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+      background: rgba(40, 20, 60, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #5a3a8a;
+    }
+
+    .admin-section-title {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #ff80ff;
+      margin-bottom: 5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #5a3a8a;
+    }
+
+    .admin-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .admin-input-group label {
+      font-size: 0.9rem;
+      color: #c0c0ff;
+    }
+
+    .admin-input {
+      padding: 10px 12px;
+      background: rgba(30, 20, 50, 0.8);
+      border: 1px solid #5a4a8a;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .admin-input:focus {
+      outline: none;
+      border-color: #8a6aff;
+      box-shadow: 0 0 10px rgba(138, 106, 255, 0.3);
+    }
+
+    .admin-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .admin-btn {
+      flex: 1;
+      padding: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .admin-btn.add {
+      background: linear-gradient(90deg, #00cc66, #00aa44);
+      color: white;
+    }
+
+    .admin-btn.add:hover {
+      background: linear-gradient(90deg, #00dd77, #00bb55);
+      transform: translateY(-2px);
+    }
+
+    .admin-btn.remove {
+      background: linear-gradient(90deg, #ff4d4d, #ff3333);
+      color: white;
+    }
+
+    .admin-btn.remove:hover {
+      background: linear-gradient(90deg, #ff5e5e, #ff4444);
+      transform: translateY(-2px);
+    }
+
+    .admin-btn.set {
+      background: linear-gradient(90deg, #4d94ff, #3377ff);
+      color: white;
+    }
+
+    .admin-btn.set:hover {
+      background: linear-gradient(90deg, #5ea5ff, #4488ff);
+      transform: translateY(-2px);
+    }
+
+    .admin-users-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(30, 20, 50, 0.8);
+      border-radius: 8px;
+      border: 1px solid #5a4a8a;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .admin-user-item {
+      padding: 8px;
+      border-bottom: 1px solid #4a3a7a;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .admin-user-item:hover {
+      background: rgba(80, 60, 120, 0.5);
+    }
+
+    .admin-user-item:last-child {
+      border-bottom: none;
+    }
+
+    .user-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-name {
+      font-weight: 500;
+    }
+
+    .user-balance {
+      color: #ffcc00;
+      font-weight: 600;
+    }
+
+    .admin-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat-item {
+      background: rgba(30, 20, 50, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid #5a4a8a;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffcc00;
+      margin-top: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #a0a0ff;
+    }
+
+    .admin-warning {
+      text-align: center;
+      color: #ffcc00;
+      font-size: 0.8rem;
+      padding: 8px;
+      background: rgba(255, 204, 0, 0.1);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 204, 0, 0.3);
+      margin-top: 10px;
+    }
+
+    /* Плавающая кнопка админа */
+    .admin-float-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #ff4d94, #ff2a7a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 77, 148, 0.4);
+      z-index: 1000;
+      transition: all 0.3s;
+    }
+
+    .admin-float-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(255, 77, 148, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">РУЛЕТКА ПРЕМИУМА 2.0</div>
+
+  <div class="main-content">
+    <!-- Левая панель — настройки -->
+    <div class="left-panel">
+      <div class="balance-display">
+        <span class="balance-label">Ваш баланс:</span>
+        <span class="balance-value" id="balance-value">
+          <i class="fas fa-star" style="color: #ffcc00;"></i>
+          <span id="balance">0</span> ⭐
+        </span>
+      </div>
+
+      <div class="control-group">
+        <label>Ставка (Telegram Stars):</label>
+        <div class="range-container">
+          <span class="range-label min">9 ⭐</span>
+          <div class="range-wrapper">
+            <input type="range" id="stars" min="9" max="999" value="199" step="1"/>
+          </div>
+          <span class="range-label max">999 ⭐</span>
+        </div>
+        <div class="value-display stars">
+          <span id="stars-value">199</span> ⭐
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Желаемое количество дней премиума:</label>
+        <div class="range-container">
+          <span class="range-label min">1 д</span>
+          <div class="range-wrapper">
+            <input type="range" id="days" min="1" max="365" value="30" step="1"/>
+          </div>
+          <span class="range-label max">365 д</span>
+        </div>
+        <div class="value-display days">
+          <span id="days-value">30</span> дней
+        </div>
+      </div>
+
+      <button class="spin-button" id="spin-btn">ПРОКРУТИТЬ →</button>
+
+      <button class="topup-button" id="topup-btn">
+        <i class="fas fa-coins"></i>
+        ПОПОЛНИТЬ БАЛАНС
+      </button>
+
+      <div class="small-hint">
+        Чем больше ставка — тем выше шанс выиграть желаемое количество дней
+      </div>
+
+      <!-- Скрытая панель пополнения -->
+      <div class="topup-options" id="topup-options" style="display: none;">
+        <div class="small-hint" style="margin-bottom: 10px;">
+          Выберите количество звезд для пополнения:
+        </div>
+
+        <div class="topup-option" data-amount="49">
+          <div>
+            <div class="topup-amount">49 ⭐</div>
+            <div class="topup-price">Минимальное пополнение</div>
+          </div>
+          <i class="fas fa-check" style="color: #00ff88; display: none;"></i>
+        </div>
+
+        <div class="topup-option" data-amount="99">
+          <div>
+            <div class="topup-amount">99 ⭐</div>
+            <div class="topup-price">Популярный вариант</div>
+          </div>
+          <i class="fas fa-check" style="color: #00ff88; display: none;"></i>
+        </div>
+
+        <div class="topup-option" data-amount="199">
+          <div>
+            <div class="topup-amount">199 ⭐</div>
+            <div class="topup-price">Выгодное предложение</div>
+          </div>
+          <i class="fas fa-check" style="color: #00ff88; display: none;"></i>
+        </div>
+
+        <div class="topup-option" data-amount="499">
+          <div>
+            <div class="topup-amount">499 ⭐</div>
+            <div class="topup-price">Для активных игроков</div>
+          </div>
+          <i class="fas fa-check" style="color: #00ff88; display: none;"></i>
+        </div>
+
+        <div class="topup-option" data-amount="999">
+          <div>
+            <div class="topup-amount">999 ⭐</div>
+            <div class="topup-price">Максимальное пополнение</div>
+          </div>
+          <i class="fas fa-check" style="color: #00ff88; display: none;"></i>
+        </div>
+
+        <button class="topup-confirm-button" id="topup-confirm-btn" disabled>
+          <i class="fas fa-shopping-cart"></i>
+          ВЫБРАТЬ ДЛЯ ПОПОЛНЕНИЯ
+        </button>
+
+        <div class="payment-info">
+          <i class="fas fa-info-circle"></i>
+          Оплата производится через Telegram Stars. После подтверждения откроется окно оплаты.
+        </div>
+
+        <div class="small-hint" style="margin-top: 10px;">
+          Минимальная сумма пополнения: 49 ⭐
+        </div>
+      </div>
+
+      <!-- Админ панель (скрыта по умолчанию) -->
+      <div class="admin-panel" id="admin-panel">
+        <div class="admin-section-title">
+          <i class="fas fa-crown"></i> АДМИН ПАНЕЛЬ
+        </div>
+
+        <div class="admin-input-group">
+          <label for="admin-user-id">ID пользователя:</label>
+          <input type="text" id="admin-user-id" class="admin-input" placeholder="Например: 123456789">
+        </div>
+
+        <div class="admin-input-group">
+          <label for="admin-stars-amount">Количество звезд:</label>
+          <input type="number" id="admin-stars-amount" class="admin-input" placeholder="Введите количество" min="1" max="999999" value="1000">
+        </div>
+
+        <div class="admin-buttons">
+          <button class="admin-btn add" id="admin-add-btn">
+            <i class="fas fa-plus"></i> Добавить
+          </button>
+          <button class="admin-btn remove" id="admin-remove-btn">
+            <i class="fas fa-minus"></i> Снять
+          </button>
+          <button class="admin-btn set" id="admin-set-btn">
+            <i class="fas fa-equals"></i> Установить
+          </button>
+        </div>
+
+        <div class="admin-stats">
+          <div class="stat-item">
+            <div class="stat-label">Всего пользователей</div>
+            <div class="stat-value" id="total-users">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Общий баланс</div>
+            <div class="stat-value" id="total-balance">0 ⭐</div>
+          </div>
+        </div>
+
+        <div class="admin-input-group">
+          <label for="admin-search-user">Поиск пользователя:</label>
+          <input type="text" id="admin-search-user" class="admin-input" placeholder="ID, имя или username">
+        </div>
+
+        <div class="admin-users-list" id="admin-users-list">
+          <!-- Список пользователей будет генерироваться динамически -->
+          <div class="admin-user-item" data-user-id="123456789">
+            <div class="user-info">
+              <div class="user-name">Админ</div>
+              <div class="user-balance">∞ ⭐</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Только для администраторов! Все действия логируются.
+        </div>
+      </div>
+
+      <!-- Предупреждение о недостатке баланса -->
+      <div id="no-balance-warning" class="no-balance-warning" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        У вас недостаточно звезд для ставки. Пополните баланс.
+      </div>
+    </div>
+
+    <!-- Правая панель — рулетка -->
+    <div class="right-panel">
+      <div class="roulette-container">
+        <!-- Вращающаяся стрелка-треугольник -->
+        <div class="spin-arrow" id="spin-arrow">
+          <div class="arrow-glow"></div>
+          <div class="arrow-triangle"></div>
+        </div>
+
+        <!-- Круг с разметкой -->
+        <div class="circle-marks" id="circle-marks"></div>
+
+        <!-- Круг рулетки -->
+        <div class="chance-circle" id="roulette">
+          <div class="progress-ring" id="progress"></div>
+          <div class="center-text">
+            <div class="chance-value" id="chance-value">—</div>
+            <div class="chance-desc">ШАНС ВЫИГРАТЬ</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Плавающая кнопка админа (только для админов) -->
+<div class="admin-float-btn" id="admin-float-btn" style="display: none;">
+  <i class="fas fa-crown"></i>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+// Инициализация Telegram Web App
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+// Получаем элементы DOM
+const starsSlider = document.getElementById('stars');
+const starsDisplay = document.getElementById('stars-value');
+const daysSlider = document.getElementById('days');
+const daysDisplay = document.getElementById('days-value');
+const chanceValue = document.getElementById('chance-value');
+const progressRing = document.getElementById('progress');
+const spinBtn = document.getElementById('spin-btn');
+const resultDiv = document.getElementById('result');
+const spinArrow = document.getElementById('spin-arrow');
+const circleMarks = document.getElementById('circle-marks');
+const balanceValue = document.getElementById('balance');
+const topupBtn = document.getElementById('topup-btn');
+const topupOptions = document.getElementById('topup-options');
+const topupConfirmBtn = document.getElementById('topup-confirm-btn');
+const topupOptionElements = document.querySelectorAll('.topup-option');
+const noBalanceWarning = document.getElementById('no-balance-warning');
+const adminPanel = document.getElementById('admin-panel');
+const adminFloatBtn = document.getElementById('admin-float-btn');
+const adminUserIdInput = document.getElementById('admin-user-id');
+const adminStarsAmountInput = document.getElementById('admin-stars-amount');
+const adminAddBtn = document.getElementById('admin-add-btn');
+const adminRemoveBtn = document.getElementById('admin-remove-btn');
+const adminSetBtn = document.getElementById('admin-set-btn');
+const adminSearchInput = document.getElementById('admin-search-user');
+const adminUsersList = document.getElementById('admin-users-list');
+const totalUsersElement = document.getElementById('total-users');
+const totalBalanceElement = document.getElementById('total-balance');
+
+let isSpinning = false;
+let animationFrameId = null;
+let currentBalance = 0;
+let selectedTopupAmount = 0;
+
+// Список администраторов (добавьте сюда ID администраторов)
+const ADMIN_IDS = [
+  123456789, // Пример ID админа
+  // Добавьте сюда реальные ID администраторов
+];
+
+// Проверка, является ли текущий пользователь администратором
+function checkIfAdmin() {
+  const user = tg.initDataUnsafe?.user;
+  if (!user) return false;
+
+  const userId = user.id;
+  return ADMIN_IDS.includes(userId);
+}
+
+// Показываем/скрываем админ-панель в зависимости от прав
+function setupAdminPanel() {
+  const isAdmin = checkIfAdmin();
+
+  if (isAdmin) {
+    // Показываем плавающую кнопку админа
+    adminFloatBtn.style.display = 'flex';
+
+    // Обработчик клика по плавающей кнопке
+    adminFloatBtn.addEventListener('click', () => {
+      const isVisible = adminPanel.style.display === 'block';
+      adminPanel.style.display = isVisible ? 'none' : 'block';
+      adminFloatBtn.innerHTML = isVisible ? '<i class="fas fa-crown"></i>' : '<i class="fas fa-times"></i>';
+
+      if (!isVisible) {
+        // Загружаем данные при открытии админ-панели
+        loadAdminData();
+      }
+    });
+
+    // Устанавливаем ID текущего пользователя в поле ввода
+    if (tg.initDataUnsafe?.user?.id) {
+      adminUserIdInput.value = tg.initDataUnsafe.user.id;
+    }
+
+    console.log('Админ-панель доступна для пользователя ID:', tg.initDataUnsafe?.user?.id);
+  }
+}
+
+// Загрузка данных для админ-панели
+function loadAdminData() {
+  // В реальном приложении здесь будет запрос к серверу
+  // Для демонстрации используем моковые данные
+
+  // Обновляем статистику
+  updateAdminStats();
+
+  // Загружаем список пользователей
+  loadUserList();
+}
+
+// Обновление статистики админ-панели
+function updateAdminStats() {
+  // В реальном приложении здесь будет запрос к API
+  // Для демонстрации используем моковые данные
+  totalUsersElement.textContent = '127';
+  totalBalanceElement.textContent = '45,280 ⭐';
+}
+
+// Загрузка списка пользователей
+function loadUserList(searchQuery = '') {
+  // Очищаем список
+  adminUsersList.innerHTML = '';
+
+  // Моковые данные пользователей
+  const mockUsers = [
+    { id: 123456789, name: 'Админ', username: 'admin', balance: 999999 },
+    { id: 987654321, name: 'Иван', username: 'ivan123', balance: 1250 },
+    { id: 555555555, name: 'Мария', username: 'maria_g', balance: 500 },
+    { id: 444444444, name: 'Алексей', username: 'alex_tech', balance: 75 },
+    { id: 333333333, name: 'Екатерина', username: 'kate_s', balance: 3200 },
+  ];
+
+  // Фильтруем пользователей по поисковому запросу
+  const filteredUsers = mockUsers.filter(user => {
+    if (!searchQuery) return true;
+
+    const query = searchQuery.toLowerCase();
+    return (
+      user.id.toString().includes(query) ||
+      user.name.toLowerCase().includes(query) ||
+      user.username.toLowerCase().includes(query)
+    );
+  });
+
+  // Добавляем пользователей в список
+  filteredUsers.forEach(user => {
+    const userItem = document.createElement('div');
+    userItem.className = 'admin-user-item';
+    userItem.dataset.userId = user.id;
+
+    userItem.innerHTML = `
+      <div class="user-info">
+        <div class="user-name">
+          ${user.name} (@${user.username})
+        </div>
+        <div class="user-balance">
+          ${user.balance.toLocaleString()} ⭐
+        </div>
+      </div>
+    `;
+
+    // Обработчик клика по пользователю
+    userItem.addEventListener('click', () => {
+      adminUserIdInput.value = user.id;
+      adminStarsAmountInput.value = 1000;
+    });
+
+    adminUsersList.appendChild(userItem);
+  });
+}
+
+// Функция для отправки админ-команды
+function sendAdminCommand(action, userId, amount, reason = '') {
+  const commandData = {
+    action: 'admin_command',
+    command: action,
+    target_user_id: parseInt(userId),
+    amount: parseInt(amount),
+    reason: reason,
+    admin_id: tg.initDataUnsafe?.user?.id,
+    admin_name: tg.initDataUnsafe?.user?.first_name,
+    admin_username: tg.initDataUnsafe?.user?.username,
+    timestamp: new Date().toISOString()
+  };
+
+  // Отправляем команду боту
+  tg.sendData(JSON.stringify(commandData));
+
+  // Показываем подтверждение
+  const actionText = action === 'add_stars' ? 'добавлены' :
+                    action === 'remove_stars' ? 'списаны' : 'установлены';
+
+  tg.showAlert(`Команда отправлена! ${amount} звезд будут ${actionText} пользователю ${userId}.`);
+
+  // Если команда для текущего пользователя, обновляем локальный баланс
+  const currentUserId = tg.initDataUnsafe?.user?.id;
+  if (parseInt(userId) === currentUserId) {
+    if (action === 'add_stars') {
+      currentBalance += parseInt(amount);
+    } else if (action === 'remove_stars') {
+      currentBalance = Math.max(0, currentBalance - parseInt(amount));
+    } else if (action === 'set_stars') {
+      currentBalance = parseInt(amount);
+    }
+    updateUI();
+  }
+
+  // Обновляем админ-панель
+  loadAdminData();
+}
+
+// Инициализация админ-панели
+setupAdminPanel();
+
+// Обработчики админ-кнопок
+adminAddBtn.addEventListener('click', () => {
+  const userId = adminUserIdInput.value.trim();
+  const amount = adminStarsAmountInput.value.trim();
+
+  if (!userId || !amount) {
+    tg.showAlert('Заполните все поля!');
+    return;
+  }
+
+  sendAdminCommand('add_stars', userId, amount, 'Ручное добавление администратором');
+});
+
+adminRemoveBtn.addEventListener('click', () => {
+  const userId = adminUserIdInput.value.trim();
+  const amount = adminStarsAmountInput.value.trim();
+
+  if (!userId || !amount) {
+    tg.showAlert('Заполните все поля!');
+    return;
+  }
+
+  sendAdminCommand('remove_stars', userId, amount, 'Ручное списание администратором');
+});
+
+adminSetBtn.addEventListener('click', () => {
+  const userId = adminUserIdInput.value.trim();
+  const amount = adminStarsAmountInput.value.trim();
+
+  if (!userId || !amount) {
+    tg.showAlert('Заполните все поля!');
+    return;
+  }
+
+  sendAdminCommand('set_stars', userId, amount, 'Ручная установка баланса администратором');
+});
+
+// Поиск пользователей
+adminSearchInput.addEventListener('input', (e) => {
+  loadUserList(e.target.value);
+});
+
+// Создание разметки на круге
+function createCircleMarks() {
+  const marksCount = 36;
+  for (let i = 0; i < marksCount; i++) {
+    const mark = document.createElement('div');
+    mark.className = 'mark';
+    if (i % 6 === 0) mark.classList.add('highlight');
+    mark.style.transform = `rotate(${i * 10}deg)`;
+    circleMarks.appendChild(mark);
+  }
+}
+
+function calcChance() {
+  const stars = Number(starsSlider.value);
+  const days = Number(daysSlider.value) || 1;
+
+  const basePrice = 18 + (days > 90 ? 4 : days > 30 ? 2 : 0);
+  let chance = (stars / (days * basePrice)) * 100;
+
+  chance = Math.max(3, Math.min(92, Math.round(chance * 10) / 10));
+
+  return chance;
+}
+
+function updateUI() {
+  const stars = starsSlider.value;
+  starsDisplay.textContent = stars;
+
+  const days = daysSlider.value;
+  daysDisplay.textContent = days;
+
+  const chance = calcChance();
+  chanceValue.textContent = chance.toFixed(1) + "%";
+
+  const deg = (chance / 100) * 360;
+  progressRing.style.setProperty('--success-deg', deg + 'deg');
+
+  chanceValue.style.color = chance > 65 ? '#00ffaa' :
+                           chance > 35 ? '#ffdd55' : '#ff7777';
+
+  // Обновляем баланс
+  balanceValue.textContent = currentBalance.toLocaleString();
+
+  // Проверяем достаточно ли звезд для ставки
+  const betAmount = Number(stars);
+  const canSpin = betAmount <= currentBalance && currentBalance > 0;
+
+  // Показываем/скрываем предупреждение
+  if (currentBalance === 0 || betAmount > currentBalance) {
+    noBalanceWarning.style.display = 'block';
+    spinBtn.disabled = true;
+    spinBtn.style.background = 'linear-gradient(90deg, #666, #888)';
+  } else {
+    noBalanceWarning.style.display = 'none';
+    spinBtn.disabled = isSpinning;
+    spinBtn.style.background = 'linear-gradient(90deg, #ff6b6b, #ff8e53)';
+  }
+
+  // Обновляем доступность ползунков
+  starsSlider.disabled = isSpinning;
+  daysSlider.disabled = isSpinning;
+}
+
+// Инициализация из параметров Telegram
+function initFromTelegram() {
+  const initData = tg.initDataUnsafe;
+
+  // Пробуем получить баланс из параметров запуска
+  if (initData && initData.start_param) {
+    try {
+      const params = new URLSearchParams(initData.start_param);
+      if (params.get('balance')) {
+        currentBalance = parseInt(params.get('balance'));
+      }
+    } catch (e) {
+      console.error('Error parsing start params:', e);
+    }
+  }
+
+  // Пробуем из query string
+  const urlParams = new URLSearchParams(window.location.search);
+  const balanceFromUrl = urlParams.get('balance');
+  if (balanceFromUrl) {
+    currentBalance = parseInt(balanceFromUrl);
+  }
+
+  updateUI();
+}
+
+// Обработчики для пополнения
+topupBtn.addEventListener('click', () => {
+  const isVisible = topupOptions.style.display !== 'none';
+  if (isVisible) {
+    topupOptions.style.display = 'none';
+    topupBtn.innerHTML = '<i class="fas fa-coins"></i> ПОПОЛНИТЬ БАЛАНС';
+  } else {
+    topupOptions.style.display = 'block';
+    topupBtn.innerHTML = '<i class="fas fa-times"></i> ОТМЕНА ПОПОЛНЕНИЯ';
+  }
+});
+
+topupOptionElements.forEach(option => {
+  option.addEventListener('click', () => {
+    topupOptionElements.forEach(opt => {
+      opt.classList.remove('selected');
+      opt.querySelector('i').style.display = 'none';
+    });
+
+    option.classList.add('selected');
+    option.querySelector('i').style.display = 'block';
+
+    selectedTopupAmount = parseInt(option.dataset.amount);
+    topupConfirmBtn.disabled = false;
+    topupConfirmBtn.innerHTML = `<i class="fas fa-shopping-cart"></i> ПОПОЛНИТЬ ${selectedTopupAmount} ⭐`;
+  });
+});
+
+topupConfirmBtn.addEventListener('click', () => {
+  if (selectedTopupAmount >= 49) {
+    const paymentData = {
+      action: 'request_topup',
+      amount: selectedTopupAmount,
+      user_id: tg.initDataUnsafe?.user?.id,
+      username: tg.initDataUnsafe?.user?.username,
+      first_name: tg.initDataUnsafe?.user?.first_name,
+      invoice_payload: `topup_${Date.now()}_${selectedTopupAmount}`
+    };
+
+    tg.sendData(JSON.stringify(paymentData));
+
+    tg.showAlert(`Запрос на пополнение ${selectedTopupAmount} ⭐ отправлен. Бот обработает ваш запрос и откроет окно оплаты.`);
+
+    topupOptions.style.display = 'none';
+    topupBtn.innerHTML = '<i class="fas fa-coins"></i> ПОПОЛНИТЬ БАЛАНС';
+
+    topupOptionElements.forEach(opt => {
+      opt.classList.remove('selected');
+      opt.querySelector('i').style.display = 'none';
+    });
+    selectedTopupAmount = 0;
+    topupConfirmBtn.disabled = true;
+    topupConfirmBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> ВЫБРАТЬ ДЛЯ ПОПОЛНЕНИЯ';
+  }
+});
+
+// Обновление баланса
+function updateBalance(newBalance) {
+  currentBalance = newBalance;
+  updateUI();
+}
+
+starsSlider.addEventListener('input', updateUI);
+daysSlider.addEventListener('input', updateUI);
+
+spinBtn.addEventListener('click', () => {
+  if (isSpinning) return;
+
+  const betAmount = Number(starsSlider.value);
+  if (betAmount > currentBalance) {
+    tg.showAlert("Недостаточно звезд на балансе! Пополните баланс.");
+    return;
+  }
+
+  isSpinning = true;
+
+  starsSlider.disabled = true;
+  daysSlider.disabled = true;
+  spinBtn.disabled = true;
+
+  currentBalance -= betAmount;
+  updateUI();
+
+  resultDiv.textContent = '';
+  resultDiv.className = 'result';
+
+  const chance = calcChance() / 100;
+  const win = Math.random() < chance;
+
+  const extraSpins = 6 + Math.floor(Math.random() * 5);
+
+  let finalAngle;
+  if (win) {
+    const winAngle = chance * 360;
+    finalAngle = 360 * extraSpins + Math.random() * winAngle;
+  } else {
+    const winAngle = chance * 360;
+    finalAngle = 360 * extraSpins + winAngle + Math.random() * (360 - winAngle);
+  }
+
+  const duration = 3500 + Math.random() * 1500;
+  const startTime = Date.now();
+
+  spinArrow.style.transition = 'none';
+  spinArrow.style.transform = 'translateX(-50%) rotate(0deg)';
+
+  function animate() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+    const currentAngle = easeOutCubic * finalAngle;
+
+    spinArrow.style.transform = `translateX(-50%) rotate(${currentAngle}deg)`;
+
+    if (progress < 1) {
+      animationFrameId = requestAnimationFrame(animate);
+    } else {
+      animationFrameId = null;
+
+      setTimeout(() => {
+        const daysWon = Number(daysSlider.value);
+
+        if (win) {
+          resultDiv.textContent = `УСПЕХ! Вы выиграли ${daysWon} дней Премиума! 🎉`;
+          resultDiv.className = 'result win';
+
+          const winData = {
+            action: 'premium_won',
+            stars_bet: betAmount,
+            days_won: daysWon,
+            chance_percent: (chance * 100).toFixed(1),
+            user_id: tg.initDataUnsafe?.user?.id,
+            username: tg.initDataUnsafe?.user?.username,
+            first_name: tg.initDataUnsafe?.user?.first_name,
+            timestamp: new Date().toISOString(),
+            transaction_id: `win_${Date.now()}_${tg.initDataUnsafe?.user?.id || 'unknown'}`
+          };
+
+          tg.sendData(JSON.stringify(winData));
+
+          tg.showAlert(`🎉 Поздравляем! Вы выиграли ${daysWon} дней Премиума!`);
+        } else {
+          resultDiv.textContent = 'Не повезло... Попробуйте ещё раз!';
+          resultDiv.className = 'result lose';
+
+          const loseData = {
+            action: 'roulette_lose',
+            stars_bet: betAmount,
+            user_id: tg.initDataUnsafe?.user?.id,
+            timestamp: new Date().toISOString()
+          };
+
+          tg.sendData(JSON.stringify(loseData));
+        }
+
+        spinArrow.style.transition = 'none';
+        spinArrow.style.transform = 'translateX(-50%) rotate(0deg)';
+
+        setTimeout(() => {
+          isSpinning = false;
+          updateUI();
+        }, 500);
+
+      }, 500);
+    }
+  }
+
+  animate();
+});
+
+// Инициализация приложения
+createCircleMarks();
+initFromTelegram();
+
+// Экспортируем функцию для обновления баланса
+window.updateBalance = updateBalance;
+
+// Обработчик для получения команд от бота
+window.addEventListener('message', (event) => {
+  try {
+    const data = JSON.parse(event.data);
+
+    if (data.action === 'update_balance') {
+      updateBalance(data.balance);
+    } else if (data.action === 'topup_success') {
+      tg.showAlert(`Пополнение на ${data.amount} ⭐ успешно! Новый баланс: ${data.new_balance} ⭐`);
+      updateBalance(data.new_balance);
+    } else if (data.action === 'admin_balance_update') {
+      // Команда от бота для обновления баланса (для админов)
+      if (checkIfAdmin()) {
+        currentBalance = data.new_balance;
+        updateUI();
+        tg.showAlert(`Баланс обновлен: ${data.new_balance} ⭐`);
+      }
+    }
+  } catch (e) {
+    console.error('Error parsing message:', e);
+  }
+});
+
+// Обработчик закрытия приложения
+tg.onEvent('closing', () => {
+  console.log('Web App закрывается');
+});
+</script>
+</body>
+</html>
