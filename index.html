@@ -911,11 +911,16 @@
 <script>
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
-  tg.ready();  // обязательно вызвать
-
-  // Вот здесь отладка — внутри <script>
-  console.log("WebApp ready, initData:", tg.initDataUnsafe);
+tg.ready();
 tg.expand();
+
+console.log("Telegram WebApp инициализирован");
+console.log("initDataUnsafe:", tg.initDataUnsafe);
+console.log("Есть ли пользователь:", tg.initDataUnsafe?.user ? "Да" : "Нет");
+if (tg.initDataUnsafe?.user) {
+  console.log("User ID:", tg.initDataUnsafe.user.id);
+  console.log("Username:", tg.initDataUnsafe.user.username || "не указан");
+}
 
 // Получаем элементы DOM
 const starsSlider = document.getElementById('stars');
@@ -1449,5 +1454,6 @@ tg.onEvent('closing', () => {
 </script>
 </body>
 </html>
+
 
 
